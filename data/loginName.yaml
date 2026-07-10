@@ -7,8 +7,8 @@
   testCase:
     - case_name: 管理员登录并获取JWT令牌
       data:
-        username: admin
-        password: admin123
+        username: qq
+        password: 123456
       validation:
         - contains: { 'message': '登录成功' }
       extract:

@@ -1,5 +1,43 @@
 # 智驾测试管理平台 - 借用管理模块接口用例
 # 对应 lpATMP vehicle_plugin(borrow_router)：/api/borrow/*
+# 注意：借用模块依赖一辆真实存在的车辆，因此先独立创建一辆专用车，再走借用全流程
+- baseInfo:
+    api_name: 创建借用专用车辆
+    url: /api/vehicle/createvehicle
+    method: post
+    header:
+      Content-Type: application/json;charset=UTF-8
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 借用模块-创建专用测试车辆
+      json:
+        model: C11
+        vehicle_code: BORROW-${timestamp()}
+        vin_code: ${generate_vin()}
+        plate_number: 浙B${timestamp()}
+        group: 行车组
+        vehicle_status: 可借用
+        test_status: 支持全部测试
+        parking_location: 零跑汽车智驾测试场
+        owner_name: 智驾测试组
+      validation:
+        - contains: { 'message': '创建成功' }
+        - eq: { 'code': 200 }
+
+- baseInfo:
+    api_name: 车辆高级查询
+    url: /api/vehicle/advsearch
+    method: post
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 查询车辆列表并提取借用专用车辆ID
+      validation:
+        - contains: { 'message': 'success' }
+      extract:
+        borrow_vehicle_id: $.data.items[0].id
+        borrow_vin_code: $.data.items[0].vin_code
+
 - baseInfo:
     api_name: 创建借用记录
     url: /api/borrow/createborrow
@@ -10,9 +48,9 @@
   testCase:
     - case_name: 借用一辆测试车辆
       json:
-        vehicle_id: ${get_extract_data(vehicle_id)}
+        vehicle_id: ${get_extract_data(borrow_vehicle_id)}
         model: C11
-        vin_code: ${get_extract_data(vin_code)}
+        vin_code: ${get_extract_data(borrow_vin_code)}
         borrower: 自动化测试
         borrow_time: ${end_year_time()}
         driver_name: 测试司机

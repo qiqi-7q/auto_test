@@ -9,6 +9,7 @@ from base.generateId import m_id, c_id
 # 注意：业务场景的接口测试要调用base目录下的apiutil_business文件
 
 @allure.feature(next(m_id) + '电子商务管理系统（业务场景）')
+@pytest.mark.skip(reason='电商Demo用例，已废弃，仅保留lpATMP相关用例')
 class TestEBusinessScenario:
 
     @allure.story(next(c_id) + '商品列表到下单支付流程')

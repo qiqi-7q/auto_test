@@ -7,6 +7,7 @@ from base.generateId import m_id, c_id
 
 
 @allure.feature(next(m_id) + '用户管理模块（单接口）')
+@pytest.mark.skip(reason='电商Demo用例，已废弃，仅保留lpATMP相关用例')
 class TestUserManager:
 
     # 场景，allure报告的目录结构

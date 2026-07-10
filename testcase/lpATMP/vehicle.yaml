@@ -13,6 +13,7 @@
         model: C11
         vehicle_code: TEST-${timestamp()}
         vin_code: ${generate_vin()}
+        plate_number: 浙A${timestamp()}
         group: 行车组
         vehicle_status: 可借用
         test_status: 支持全部测试
