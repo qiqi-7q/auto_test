@@ -1,0 +1,8 @@
+INFO - 2026-07-10 11:11:25,676 - sendrequest.py:135 -[sendrequest:run_main] - 接口名称：智驾测试管理平台登录
+INFO - 2026-07-10 11:11:25,676 - sendrequest.py:136 -[sendrequest:run_main] - 请求地址：http://127.0.0.1:8000/api/auth/login
+INFO - 2026-07-10 11:11:25,677 - sendrequest.py:137 -[sendrequest:run_main] - 请求方式：post
+INFO - 2026-07-10 11:11:25,678 - sendrequest.py:138 -[sendrequest:run_main] - 测试用例名称：管理员登录并获取JWT令牌
+INFO - 2026-07-10 11:11:25,678 - sendrequest.py:139 -[sendrequest:run_main] - 请求头：{'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}
+INFO - 2026-07-10 11:11:25,679 - sendrequest.py:140 -[sendrequest:run_main] - Cookie：None
+INFO - 2026-07-10 11:11:25,680 - sendrequest.py:144 -[sendrequest:run_main] - 请求参数：{'data': {'username': 'admin', 'password': 'admin123'}}
+ERROR - 2026-07-10 11:11:27,732 - sendrequest.py:110 -[sendrequest:send_request] - ConnectionError--连接异常

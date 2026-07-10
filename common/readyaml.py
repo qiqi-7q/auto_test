@@ -1,4 +1,4 @@
-import yaml
+import yaml 
 import traceback
 import os
 
@@ -7,13 +7,17 @@ from conf.operationConfig import OperationConfig
 from conf.setting import FILE_PATH
 
 
-def get_testcase_yaml(file):
+def get_testcase_yaml(file):  
+    """
+    读取单接口标准 yaml 用例文件，自动拆分公共baseInfo和每条独立testCase
+    生成 [baseInfo, 单条用例] 格式的二维列表，专门给 @pytest.mark.parametrize 参数化用。
+    """
     testcase_list = []
     try:
         with open(file, 'r', encoding='utf-8') as f:
             data = yaml.safe_load(f)
             if len(data) <= 1:
-                yam_data = data[0]
+                yam_data = data[0]  
                 base_info = yam_data.get('baseInfo')
                 for ts in yam_data.get('testCase'):
                     param = [base_info, ts]
@@ -43,7 +47,7 @@ class ReadYamlData:
     @property
     def get_yaml_data(self):
         """
-        获取测试用例yaml数据
+        读取实例绑定的 yaml 文件全部原始数据，返回完整 list；加 @property，调用不用写括号。
         :param file: YAML文件
         :return: 返回list
         """
@@ -57,6 +61,8 @@ class ReadYamlData:
 
     def write_yaml_data(self, value):
         """
+        写入数据到extract.yaml文件，用于后续接口动态读取。
+        要求入参必须是字典 dict，a 模式追加写入，不会覆盖原有数据。
         写入数据需为dict，allow_unicode=True表示写入中文，sort_keys按顺序写入
         写入YAML文件数据,主要用于接口关联
         :param value: 写入数据，必须用dict
@@ -81,18 +87,15 @@ class ReadYamlData:
 
     def clear_yaml_data(self):
         """
-        清空extract.yaml文件数据
-        :param filename: yaml文件名
-        :return:
+        清空extract.yaml全部内容，用于测试会话前置清理，避免上一轮测试残留 token 干扰当前用例
         """
         with open(FILE_PATH['EXTRACT'], 'w') as f:
             f.truncate()
 
     def get_extract_yaml(self, node_name, second_node_name=None):
         """
-        用于读取接口提取的变量值
-        :param node_name:
-        :return:
+        读取extract.yaml里存储的全局变量（token/cookie）
+        支持一级 key、二级嵌套 key 读取；文件不存在自动创建空文件。
         """
         if os.path.exists(FILE_PATH['EXTRACT']):
             pass
@@ -121,8 +124,7 @@ class ReadYamlData:
 
     def get_method(self):
         """
-        :param self:
-        :return:
+        获取yaml测试数据中的请求方法
         """
         yal_data = self.get_yaml_data()
         metd = yal_data[0].get('method')
@@ -131,7 +133,6 @@ class ReadYamlData:
     def get_request_parame(self):
         """
         获取yaml测试数据中的请求参数
-        :return:
         """
         data_list = []
         yaml_data = self.get_yaml_data()

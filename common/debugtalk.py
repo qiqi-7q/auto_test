@@ -192,3 +192,10 @@ class DebugTalk:
         conf = OperationConfig()
         url = conf.get_section_for_data('api_envi', host)
         return url
+
+    def generate_vin(self):
+        """生成17位随机VIN码（字母+数字），用于智驾平台车辆创建用例，避免唯一约束冲突"""
+        import string
+        prefix = "LZF"
+        suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=14))
+        return prefix + suffix

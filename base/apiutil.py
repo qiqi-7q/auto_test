@@ -1,21 +1,22 @@
-import json
-import re
-from json.decoder import JSONDecodeError
+import json  # 导入json模块，用于解析json数据
+import re  # 导入re模块，用于正则表达式
+from json.decoder import JSONDecodeError  # 导入json.decoder模块，用于解析json数据时的异常
+import allure  # 导入allure模块，用于测试报告，生成测试报告 
+import jsonpath  # 导入jsonpath模块，用于解析json数据
 
-import allure
-import jsonpath
-
-from common.assertions import Assertions
-from common.debugtalk import DebugTalk
+from common.assertions import Assertions  # 导入assertions模块，用于断言
+from common.debugtalk import DebugTalk  # 导入debugtalk模块，用于调试
 from common.readyaml import get_testcase_yaml, ReadYamlData
-from common.recordlog import logs
-from common.sendrequest import SendRequest
-from conf.operationConfig import OperationConfig
-from conf.setting import FILE_PATH
+from common.recordlog import logs  # 导入recordlog模块，用于记录日志
+from common.sendrequest import SendRequest  # 导入sendrequest模块，用于发送请求
+
+
+from conf.operationConfig import OperationConfig  # 导入operationConfig模块，用于操作配置文件
+from conf.setting import FILE_PATH  # 导入setting模块，用于获取文件路径配置
 
 
 class RequestBase:
-
+    #初始化方法，用于初始化请求对象、配置对象、读取yaml数据对象、断言对象等，用于后续的请求操作
     def __init__(self):
         self.run = SendRequest()
         self.conf = OperationConfig()
@@ -23,7 +24,13 @@ class RequestBase:
         self.asserts = Assertions()
 
     def replace_load(self, data):
-        """yaml数据替换解析"""
+        """
+        yaml数据替换解析，将yaml文件里面的${}替换为对应的值
+        输入：yaml文件里面的参数值
+        输出：替换后的数据data
+        YAML中写的token: ${get_extract_data(token)}
+        自动替换成token: A7Ef0d8e8BB5A89D81b03bBeb13a2
+        """
         str_data = data
         if not isinstance(data, str):
             str_data = json.dumps(data, ensure_ascii=False)
@@ -54,7 +61,7 @@ class RequestBase:
 
     def specification_yaml(self, base_info, test_case):
         """
-        接口请求处理基本方法
+        接收 YAML 文件中的接口配置和测试用例数据，自动完成「参数处理 → 发送请求 → 数据提取 → 断言验证」的完整流程
         :param base_info: yaml文件里面的baseInfo
         :param test_case: yaml文件里面的testCase
         :return:
@@ -64,7 +71,8 @@ class RequestBase:
             url_host = self.conf.get_section_for_data('api_envi', 'host')
             api_name = base_info['api_name']
             allure.attach(api_name, f'接口名称：{api_name}', allure.attachment_type.TEXT)
-            url = url_host + base_info['url']
+            # 路径参数支持 ${} 替换，如 /api/vehicle/getvehicle/${get_extract_data(vehicle_id)}
+            url = url_host + self.replace_load(base_info['url'])
             allure.attach(api_name, f'接口地址：{url}', allure.attachment_type.TEXT)
             method = base_info['method']
             allure.attach(api_name, f'请求方法：{method}', allure.attachment_type.TEXT)

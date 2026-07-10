@@ -27,7 +27,7 @@ class TestLogin:
     # @pytest.mark.parametrize('params', get_testcase_yaml('./testcase/productManager/apiType.yaml'))
     # def test_get_api_type(self, params):
     #     RequestBase().specification_yaml(params)
-    #
+    
     # @allure.story('电网系统登录校验')
     # @pytest.mark.parametrize('params', get_testcase_yaml('./testcase/productManager/login_dw.yaml'))
     # def test_get_login_dw(self, params):

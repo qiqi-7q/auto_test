@@ -1,0 +1,86 @@
+# 智驾测试管理平台 - 车辆管理模块接口用例
+# 对应 lpATMP vehicle_plugin：/api/vehicle/*
+- baseInfo:
+    api_name: 创建车辆
+    url: /api/vehicle/createvehicle
+    method: post
+    header:
+      Content-Type: application/json;charset=UTF-8
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 新增一辆自动驾驶测试车辆
+      json:
+        model: C11
+        vehicle_code: TEST-${timestamp()}
+        vin_code: ${generate_vin()}
+        group: 行车组
+        vehicle_status: 可借用
+        test_status: 支持全部测试
+        parking_location: 零跑汽车智驾测试场
+        owner_name: 智驾测试组
+      validation:
+        - contains: { 'message': '创建成功' }
+        - eq: { 'code': 200 }
+
+- baseInfo:
+    api_name: 车辆高级查询
+    url: /api/vehicle/advsearch
+    method: post
+    header:
+      Content-Type: application/json;charset=UTF-8
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 查询车辆列表并提取最新车辆ID
+      validation:
+        - contains: { 'message': 'success' }
+      extract:
+        vehicle_id: $.data.items[0].id
+        vin_code: $.data.items[0].vin_code
+
+- baseInfo:
+    api_name: 获取车辆详情
+    url: /api/vehicle/getvehicle/${get_extract_data(vehicle_id)}
+    method: get
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 根据ID查询车辆详情
+      validation:
+        - contains: { 'message': 'success' }
+
+- baseInfo:
+    api_name: 更新车辆信息
+    url: /api/vehicle/updatevehicle/${get_extract_data(vehicle_id)}
+    method: put
+    header:
+      Content-Type: application/json;charset=UTF-8
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 更新车辆停车地点和备注
+      json:
+        parking_location: 零跑汽车智驾测试场-A区
+        remarks: 自动化测试更新-${timestamp()}
+      validation:
+        - contains: { 'message': '更新成功' }
+
+- baseInfo:
+    api_name: 车辆状态分布统计
+    url: /api/vehicle/stats/status_distribution
+    method: get
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 获取车辆状态分布饼图数据
+      validation:
+        - contains: { 'message': 'success' }
+
+- baseInfo:
+    api_name: 删除车辆
+    url: /api/vehicle/delvehicle/${get_extract_data(vehicle_id)}
+    method: delete
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 删除测试车辆
+      validation:
+        - contains: { 'message': '删除成功' }

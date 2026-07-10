@@ -1,0 +1,56 @@
+# 智驾测试管理平台 - 借用管理模块接口用例
+# 对应 lpATMP vehicle_plugin(borrow_router)：/api/borrow/*
+- baseInfo:
+    api_name: 创建借用记录
+    url: /api/borrow/createborrow
+    method: post
+    header:
+      Content-Type: application/json;charset=UTF-8
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 借用一辆测试车辆
+      json:
+        vehicle_id: ${get_extract_data(vehicle_id)}
+        model: C11
+        vin_code: ${get_extract_data(vin_code)}
+        borrower: 自动化测试
+        borrow_time: ${end_year_time()}
+        driver_name: 测试司机
+        record_creator: 自动化框架
+      validation:
+        - contains: { 'message': '创建成功' }
+
+- baseInfo:
+    api_name: 借用记录高级查询
+    url: /api/borrow/advsearch
+    method: post
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 查询借用记录列表并提取记录ID
+      validation:
+        - contains: { 'message': 'success' }
+      extract:
+        borrow_id: $.data.items[0].id
+
+- baseInfo:
+    api_name: 归还车辆
+    url: /api/borrow/returnvehicle/${get_extract_data(borrow_id)}
+    method: post
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 归还借用的测试车辆
+      validation:
+        - contains: { 'message': '已归还' }
+
+- baseInfo:
+    api_name: 删除借用记录
+    url: /api/borrow/delborrow/${get_extract_data(borrow_id)}
+    method: delete
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 删除借用记录
+      validation:
+        - contains: { 'message': '删除成功' }

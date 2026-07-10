@@ -1,0 +1,72 @@
+# 智驾测试管理平台 - 测试记录模块接口用例
+# 对应 lpATMP test_record_plugin：/api/test_record/*
+- baseInfo:
+    api_name: 创建测试记录
+    url: /api/test_record/createrecord
+    method: post
+    header:
+      Content-Type: application/json;charset=UTF-8
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 新增一条智驾测试记录
+      json:
+        project: C11项目
+        car_type: C11
+        problem_desc: 自动化用例-弯道场景目标误检
+        software_version: v1.2.0
+        vin_code: ${get_extract_data(vin_code)}
+        analyze_result: 待分析
+        remarks: 由接口自动化框架创建
+      validation:
+        - contains: { 'message': '创建成功' }
+        - eq: { 'code': 200 }
+
+- baseInfo:
+    api_name: 测试记录高级查询
+    url: /api/test_record/advsearch
+    method: post
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 查询测试记录列表并提取最新记录ID
+      validation:
+        - contains: { 'message': 'success' }
+      extract:
+        record_id: $.data.items[0].id
+
+- baseInfo:
+    api_name: 获取测试记录详情
+    url: /api/test_record/getrecord/${get_extract_data(record_id)}
+    method: get
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 根据ID查询测试记录详情
+      validation:
+        - contains: { 'message': 'success' }
+
+- baseInfo:
+    api_name: 更新测试记录
+    url: /api/test_record/updaterecord/${get_extract_data(record_id)}
+    method: put
+    header:
+      Content-Type: application/json;charset=UTF-8
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 更新测试记录分析结果
+      json:
+        analyze_result: 已分析-正常
+        remarks: 自动化框架更新-${timestamp()}
+      validation:
+        - contains: { 'message': '更新成功' }
+
+- baseInfo:
+    api_name: 删除测试记录
+    url: /api/test_record/delrecord/${get_extract_data(record_id)}
+    method: delete
+    header:
+      Authorization: Bearer ${get_extract_data(access_token)}
+  testCase:
+    - case_name: 删除测试记录
+      validation:
+        - contains: { 'message': '删除成功' }

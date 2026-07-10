@@ -2,8 +2,9 @@ import logging
 import os
 import sys
 
-DIR_BASE = os.path.dirname(os.path.dirname(__file__))
-sys.path.append(DIR_BASE)
+DIR_BASE = os.path.dirname(os.path.dirname(__file__))  # 项目根目录
+sys.path.append(DIR_BASE)  # 将项目根目录添加到sys.path中，方便导入项目中的模块
+
 
 # log日志输出级别
 LOG_LEVEL = logging.DEBUG  # 文件
