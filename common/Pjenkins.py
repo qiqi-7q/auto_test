@@ -61,7 +61,10 @@ class PJenkins(object):
         content = f'本次测试共执行{total_count}个测试用例，成功：{pass_count}个; 失败：{fail_count}个; 跳过：{skip_count}个; 执行时长：{hour}时{minute}分{seconds}秒'
         # 提取测试报告链接
         console_log = self.get_console_log()
-        report_line = re.search(r'http://192.168.105.36:8088/job/hbjjapi/(.*?)allure', console_log).group(0)
+        jenkins_url = self.conf.get_section_jenkins('url')
+        job_name = self.conf.get_section_jenkins('job_name')
+        pattern = re.escape(jenkins_url) + r'/job/' + re.escape(job_name) + r'/(.*?)allure'
+        report_line = re.search(pattern, console_log).group(0)
         report_info = {
             'total': total_count,
             'pass_count': pass_count,

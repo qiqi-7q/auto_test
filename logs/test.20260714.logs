@@ -1,0 +1,20 @@
+INFO - 2026-07-14 13:35:26,333 - sendrequest.py:135 -[sendrequest:run_main] - 接口名称：智驾测试管理平台登录
+INFO - 2026-07-14 13:35:26,334 - sendrequest.py:136 -[sendrequest:run_main] - 请求地址：http://127.0.0.1:8000/api/auth/login
+INFO - 2026-07-14 13:35:26,334 - sendrequest.py:137 -[sendrequest:run_main] - 请求方式：post
+INFO - 2026-07-14 13:35:26,334 - sendrequest.py:138 -[sendrequest:run_main] - 测试用例名称：管理员登录并获取JWT令牌
+INFO - 2026-07-14 13:35:26,335 - sendrequest.py:139 -[sendrequest:run_main] - 请求头：{'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}
+INFO - 2026-07-14 13:35:26,335 - sendrequest.py:140 -[sendrequest:run_main] - Cookie：None
+INFO - 2026-07-14 13:35:26,336 - sendrequest.py:144 -[sendrequest:run_main] - 请求参数：{'data': {'username': 'qq', 'password': 123456}}
+ERROR - 2026-07-14 13:35:28,408 - sendrequest.py:110 -[sendrequest:send_request] - ConnectionError--连接异常
+INFO - 2026-07-14 13:35:30,979 - conftest.py:70 -[conftest:pytest_terminal_summary] - =====测试结果汇总===== 总数:17 通过:0 失败:0 错误:17 跳过:0
+INFO - 2026-07-14 13:35:31,314 - conftest.py:96 -[conftest:pytest_terminal_summary] - 钉钉通知已推送
+INFO - 2026-07-14 13:35:45,206 - sendrequest.py:135 -[sendrequest:run_main] - 接口名称：智驾测试管理平台登录
+INFO - 2026-07-14 13:35:45,206 - sendrequest.py:136 -[sendrequest:run_main] - 请求地址：http://127.0.0.1:8000/api/auth/login
+INFO - 2026-07-14 13:35:45,206 - sendrequest.py:137 -[sendrequest:run_main] - 请求方式：post
+INFO - 2026-07-14 13:35:45,206 - sendrequest.py:138 -[sendrequest:run_main] - 测试用例名称：管理员登录并获取JWT令牌
+INFO - 2026-07-14 13:35:45,208 - sendrequest.py:139 -[sendrequest:run_main] - 请求头：{'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}
+INFO - 2026-07-14 13:35:45,210 - sendrequest.py:140 -[sendrequest:run_main] - Cookie：None
+INFO - 2026-07-14 13:35:45,210 - sendrequest.py:144 -[sendrequest:run_main] - 请求参数：{'data': {'username': 'qq', 'password': 123456}}
+ERROR - 2026-07-14 13:35:47,271 - sendrequest.py:110 -[sendrequest:send_request] - ConnectionError--连接异常
+INFO - 2026-07-14 13:35:50,730 - conftest.py:70 -[conftest:pytest_terminal_summary] - =====测试结果汇总===== 总数:17 通过:0 失败:0 错误:17 跳过:0
+INFO - 2026-07-14 13:35:51,051 - conftest.py:96 -[conftest:pytest_terminal_summary] - 钉钉通知已推送

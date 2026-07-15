@@ -52,7 +52,23 @@ def generate_test_summary(terminalreporter):
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
-    """自动收集pytest框架执行的测试结果并打印摘要信息"""
+    """自动收集pytest框架执行的测试结果并打印摘要信息，推送钉钉通知"""
     summary = generate_test_summary(terminalreporter)
+
+    # 尝试从Jenkins读取Allure报告链接（可选，失败不影响主流程）
+    report_line = ''
+    try:
+        from conf.operationConfig import OperationConfig
+        conf = OperationConfig()
+        jenkins_enable = conf.get_section_jenkins('enable')
+        if jenkins_enable == '1':
+            from common.Pjenkins import PJenkins
+            jk = PJenkins()
+            jk_report = jk.report_success_or_fail()
+            report_line = jk_report.get('report_line', '')
+            summary += f"\n    Allure报告链接：{report_line}"
+    except Exception as e:
+        print(f"[Jenkins报告读取跳过] enable=0或服务不可达: {e}")
+
     if dd_msg:
         send_dd_msg(summary)
