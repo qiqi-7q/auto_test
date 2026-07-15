@@ -241,6 +241,7 @@ git branch -vv   查看当前分支上游绑定关系
 git checkout 分支名   切换到已存在的本地分支
 git checkout -b 新分支名    新建分支 + 直接切换
 git push origin backend_dev = 把本地名叫 backend_dev 的分支，推送到远端仓库 origin 上同名的 backend_dev 分支
+git push -f origin backend_dev:main   origin是远程仓库名  backend_dev是本地分支名  main是远程仓库的分支名  如果远程仓库分支名和本地同名，就不需要写 :main 了
 
 
 例子一：我目前是 已经和远程仓库连接  我想把本地backend_Dev代码上传到远程  完整的步骤

@@ -337,7 +337,7 @@ Pjenkins.py 是一个 Jenkins 结果读取器 ，通过 python-jenkins 库连接
 
 "Jenkins 是一个开源的持续集成服务器，本质就是一个自动化任务调度器——它盯着代码仓库或定时计划，一旦触发就自动拉代码、跑测试、生成报告，全程无人值守。在我们项目里，Jenkins 主要干三件事：第一，定时触发，我配了 cron 表达式 0 22 * * * ，每晚 10 点自动跑 17 条接口回归用例；第二，执行测试，构建步骤里写的是 python -m pytest testcase/lpATMP/ --alluredir=./report/temp ，跑完把 Allure 原始数据归档；第三，结果通知，我封装了一个 Pjenkins 工具类，用 python-jenkins 库对接 Jenkins 的 REST API，执行完自动调 get_job_number 拿最新构建号，调 get_build_test_report 拿通过失败数，再调 get_console_log 拿控制台日志，用正则从日志里提取出 Allure 报告链接，最后把"用例统计 + 报告链接"拼成一条消息，通过钉钉机器人 webhook 推送到团队群，实现完整的 CI/CD 闭环。
 
-部署的话，我是用 war 包方式部署在 Windows 上：先确认 Java 11+ 环境，下载 jenkins.war，用 java -jar jenkins.war --httpPort=8088 启动，浏览器打开 8088 端口输入初始密码，选「安装推荐插件」，装完创建 admin 账号。然后装了 Allure Plugin 插件用来解析报告，在 Global Tool Configuration 里配置 allure 命令路径。接着建一个 Freestyle 风格的 Job，名字叫 lpATMP-api-test ，构建触发器勾选 Build periodically 填 cron 表达式，构建步骤里写 pytest 命令，构建后操作加 Allure Report 指向 report/temp 目录。最后把 Jenkins 地址、账号、API Token 填到项目的 config.ini 里，把 enable 改成 1，整个链路就通了。"
+部署的话，我是用 war 包方式部署在 Windows 上：先确认 Java 11+ 环境，下载 jenkins.war，用 java -jar jenkins.war --httpPort=8088 启动，浏览器打开 8088 端口输入初始密码，选「安装推荐插件」，装完创建 admin 账号。然后装了 Allure Plugin 插件用来解析报告，在 Global Tool Configuration 里配置 allure 命令路径。接着建一个 Freestyle 风格的 Job，名字叫 lpATMP-api-test ，构建触发器勾选 Build periodically 填 cron 表达式，构建步骤里写 pytest 命令，构建后操作加 Allure Report 指向 report/temp 目录。最后把 Jenkins 地址、账号、API Token 填到项目的 config.ini 里，把 enable 改成 1，整个链路就通了的。"
 
 简历可以借鉴：
 ### 项目名称

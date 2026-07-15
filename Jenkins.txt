@@ -1,0 +1,246 @@
+########################################################################## Jenkins 详细介绍与部署指南
+
+一、Jenkins 是什么
+
+Jenkins 是一个开源的持续集成/持续部署（CI/CD）自动化服务器，用 Java 编写，2004 年由 Kohsuke Kawaguchi 创建（原名 Hudson，2011 年分叉为 Jenkins）。它是目前全球使用最广泛的 CI/CD 工具，GitHub Star 22k+，企业占有率超过 60%。
+
+核心定位：Jenkins 本质上是一个「任务调度器 + 执行器」——你告诉它「什么时候、执行什么命令、结果怎么处理」，它就自动按计划跑，全程无人值守。
+
+通俗类比：
+- Jenkins 服务 = 一个 7×24 小时不睡觉的工人
+- Job（任务）= 工人手里的任务清单
+- Build（构建）= 执行一次任务
+- Trigger（触发器）= 闹钟，到点就叫工人干活
+- Pipeline（流水线）= 任务清单的多个步骤串联
+- Workspace（工作空间）= 工人的工位，代码和产物放这
+- Plugin（插件）= 工人的工具箱，按需扩展技能
+
+
+二、Jenkins 实现什么功能
+
+1. 六大核心能力
+- 定时触发：cron 表达式定时执行任务，比如每晚 22:00 自动跑 17 条用例
+- 代码触发：Git push/merge 自动触发（Webhook），push 代码后自动回归
+- 流水线编排：多步骤串联执行，拉代码 → 装依赖 → 跑测试 → 生成报告 → 通知
+- 结果归档：构建产物、测试报告持久化存储，Allure 报告归档，历史趋势可视化
+- 分布式执行：多台机器并行跑任务（Master-Slave 架构），大规模用例分到多机并行
+- 插件生态：1800+ 插件，覆盖几乎所有场景（Allure、Git、钉钉、邮件、Python）
+
+2. 典型应用场景
+- 场景1：接口自动化回归（本项目）→ 代码提交 → Jenkins 自动拉代码 → 跑 pytest → 生成 Allure 报告 → 钉钉通知
+- 场景2：前端构建部署 → 代码提交 → npm install → npm run build → 部署到 nginx → 通知测试环境可测
+- 场景3：后端打包发布 → 打 tag → Maven 打包 → Docker 镜像构建 → 推送镜像仓库 → K8s 滚动更新
+- 场景4：定时数据巡检 → 每天凌晨 → 跑数据一致性脚本 → 发现异常邮件告警
+
+3. Jenkins 在本项目里实现的具体功能
+- 定时回归：cron 触发器 0 22 * * *（每晚22点执行）
+- 自动执行用例：batch 命令 python -m pytest testcase/lpATMP/ --alluredir=./report/temp --clean-alluredir
+- 报告归档：Allure Plugin 解析 report/temp 目录，生成可视化报告 + 历史趋势图
+- 结果读取：Pjenkins.py 调 Jenkins REST API 读取构建号、测试报告、控制台日志
+- 链接提取：正则从控制台日志提取 Allure 报告 URL
+- 钉钉通知：pytest_terminal_summary 钩子触发 send_dd_msg() 推送摘要+链接到钉钉群
+
+
+三、Jenkins 怎么部署（Windows 完整步骤）
+
+1. 环境前置条件
+- Java 11+（Jenkins 必须依赖）：命令 java -version 确认，没有去 https://adoptium.net 下载 JDK 17
+- Python（项目需要）：命令 python --version 确认
+- allure 命令行（生成报告需要）：命令 allure --version 确认
+  如果没有：pip install allure-pytest，还要下载 allure 命令行工具 https://github.com/allure-framework/allure2/releases
+
+2. 安装 Jenkins（war 包方式，推荐）
+- 创建目录：mkdir D:\jenkins
+- 下载 war 包（约 80MB）：Invoke-WebRequest -Uri "https://get.jenkins.io/war-stable/2.504.1/jenkins.war" -OutFile "D:\jenkins\jenkins.war"
+- 指定端口 8088 启动：java -jar D:\jenkins\jenkins.war --httpPort=8088
+- 等待启动完成，看到 "Jenkins is fully up and running" 即可
+
+3. 首次初始化
+- 浏览器打开 http://127.0.0.1:8088
+- 首次访问要初始密码，在启动日志里找："Please use the following password to proceed to installation: xxxxxxxx"
+- 复制密码 → 粘贴 → 继续
+- 选「Install suggested plugins」（安装推荐插件）
+- 等待插件安装完（约 5 分钟）
+- 创建管理员账号：admin / 你的密码（记住，待会填 config.ini）
+- 进入 Jenkins 首页
+
+4. 安装必需插件
+路径：Manage Jenkins → Plugins → Available plugins → 搜索安装
+- Allure Jenkins Plugin：解析 Allure 报告，生成趋势图（必装）
+- Git（必装）
+- DingTalk：钉钉通知插件（可选，代码里已用 webhook 推送，可不装）
+- Python Plugin：执行 Python 脚本（可选）
+安装完 → Restart Jenkins
+
+5. 配置 Allure 工具
+路径：Manage Jenkins → Global Tool Configuration → Allure Commandline
+- 点「Allure installations...」
+- Name: allure
+- 勾选「Install automatically」
+- Save
+
+6. 创建 Job（核心步骤）
+路径：Jenkins 首页 → New Item
+- 任务名称：lpATMP-api-test（必须和 config.ini 的 job_name 一致）
+- 类型：Freestyle project（自由风格）
+- OK
+
+配置各个区域：
+- Source Code Management：选 None（不用 Git，直接跑本地代码）
+- Build Triggers：勾选 Build periodically，Schedule 填 0 22 * * *（每晚 22:00 执行）
+- Build：Add build step → Execute Windows batch command，填入：
+    cd /d d:\MY_study_test\Test-Automation-Framework
+    python -m pytest testcase/lpATMP/ --alluredir=./report/temp --clean-alluredir
+- Post-build Actions：Add → Allure Report，Results path 填 report/temp
+- Save
+
+7. 配置 config.ini
+修改 conf/config.ini 的 [JENKINS] 段：
+  [JENKINS]
+  enable = 1                              改为 1，开启
+  url = http://127.0.0.1:8088             Jenkins 地址
+  username = admin                        第3步创建的账号
+  password = 你的api_token                 见下方获取方式
+  timeout = 10
+  job_name = lpATMP-api-test              必须和 Jenkins Job 名一致
+
+获取 API Token（比密码更安全，推荐）：
+- 登录 Jenkins → 右上角点用户名 admin → Configure（配置）
+- API Token → Add new Token → 命名「lpATMP」→ 生成
+- 复制 token 串（只显示一次）→ 填到 config.ini 的 password 字段
+
+8. 验证完整闭环
+- 确保 lpATMP 后端在跑：在 D:\code\lpATMP\backend 下执行 uvicorn app.main:app --host 0.0.0.0 --port 8000
+- 手动触发 Jenkins 构建（或网页点 Build Now）：
+  python -c "import jenkins; s=jenkins.Jenkins('http://127.0.0.1:8088','admin','你的token'); s.build_job('lpATMP-api-test'); print('已触发')"
+- 等构建完成，检查钉钉群是否收到带 Allure 链接的通知
+- 浏览器打开 Allure 报告：start http://127.0.0.1:8088/job/lpATMP-api-test/lastBuild/allure/
+
+
+四、完整流程图
+
+1. Jenkins CI/CD 全景图
+
+  开发人员 push代码 ──→ Git 仓库 GitHub ──Webhook──→ Jenkins Master (调度中心 8088端口)
+                                                          │
+                                                          │ 1.接收触发信号
+                                                          │ 2.拉取最新代码
+                                                          │ 3.分配构建任务
+                                                          ▼
+                                            ┌─────────────────────────────────┐
+                                            │         执行内容                 │
+                                            │  cd d:\MY_study_test\Test-Auto..│
+                                            │  python -m pytest testcase/     │
+                                            │    --alluredir=./report/temp    │
+                                            │                                 │
+                                            │  跑 17 条 lpATMP 接口用例       │
+                                            │                                 │
+                                            │  allure generate ./report/temp  │
+                                            └─────────────────────────────────┘
+                                                          │
+                                                          ▼
+                                            ┌─────────────────────────────────┐
+                                            │  Post-build: Allure 归档         │
+                                            └─────────────────────────────────┘
+                                                          │
+                                                          ▼
+                                            ┌─────────────────────────────────┐
+                                            │  conftest.py 钩子自动触发       │
+                                            │                                 │
+                                            │  pytest_terminal_summary()      │
+                                            │     │                           │
+                                            │     ├→ 1. generate_test_summary│
+                                            │     │     统计: 总数17 通过17   │
+                                            │     │     失败0 耗时0.84s       │
+                                            │     │                           │
+                                            │     ├→ 2. Pjenkins              │
+                                            │     │     .report_success_or_   │
+                                            │     │     fail()                │
+                                            │     │     调 Jenkins REST API:  │
+                                            │     │     - 构建号: 123         │
+                                            │     │     - 测试报告: pass=17   │
+                                            │     │     - 提取 Allure 链接    │
+                                            │     │                           │
+                                            │     └→ 3. send_dd_msg()         │
+                                            │           钉钉推送              │
+                                            └─────────────────────────────────┘
+                                                          │
+                                            ┌─────────────┴─────────────┐
+                                            ▼                           ▼
+                                  ┌──────────────────┐       ┌──────────────────┐
+                                  │   钉钉群/邮件    │       │  Allure 报告页面 │
+                                  │                  │       │                  │
+                                  │  测试通知        │       │  用例通过率趋势图│
+                                  │  17/17 通过      │──────→│  用例明细+步骤   │
+                                  │  点击看报告      │       │  失败截图+日志   │
+                                  └──────────────────┘       └──────────────────┘
+
+2. 触发方式流程
+
+  Jenkins 触发源
+       │
+       ├─ 定时触发 cron (0 22 * * *)
+       ├─ 代码触发 Webhook (Git push)
+       └─ 手动触发 Build Now 按钮
+              │
+              ▼
+       Jenkins 执行 Job
+              │
+              ▼
+       pytest 跑用例（17 条接口测试）
+              │
+              ▼
+       Allure 生成报告
+              │
+              ▼
+       conftest 钩子读取结果+链接
+              │
+              ▼
+       钉钉推送通知
+
+3. 数据流转图
+
+  Jenkins Server                    自动化框架                      外部服务
+  ─────────────                    ────────────                   ─────────
+  ┌───────────┐                    ┌──────────────┐             ┌──────────┐
+  │ Job:      │  ①构建完成         │ conftest.py  │             │          │
+  │ lpATMP    │──────────────────→ │              │             │  钉钉群  │
+  │ -api-test │                    │ pytest_      │             │          │
+  │           │  ②REST API 调用    │ terminal_    │  ④推送消息  │          │
+  │ Build #123│←───────────────────│ summary()    │────────────→│          │
+  │           │                    │              │             │          │
+  │           │  ③返回构建数据     │ Pjenkins()   │             │          │
+  │           │──────────────────→ │  .report_    │             │          │
+  │           │                    │  success_or_ │             │          │
+  │ Allure    │                    │  fail()      │             │          │
+  │ Report    │                    │              │             │          │
+  │ /123/     │                    │ 提取报告URL  │             │          │
+  │ allure    │                    │ 汇总用例统计 │             │          │
+  └───────────┘                    └──────────────┘             └──────────┘
+
+  数据链路:
+    Jenkins Build #123
+      → Pjenkins.get_job_number() 返回 123
+      → Pjenkins.get_build_test_report() 返回 {passCount:17, failCount:0}
+      → Pjenkins.get_console_log() 返回日志全文
+      → 正则提取 → "http://127.0.0.1:8088/job/lpATMP-api-test/123/allure"
+      → 拼接 summary 字符串
+      → send_dd_msg(summary) 推送钉钉
+
+
+五、面试话术（一段话讲清 Jenkins + 部署）
+
+"Jenkins 是一个开源的持续集成服务器，本质就是一个自动化任务调度器——它盯着代码仓库或定时计划，一旦触发就自动拉代码、跑测试、生成报告，全程无人值守。在我们项目里，Jenkins 主要干三件事：第一，定时触发，我配了 cron 表达式 0 22 * * *，每晚 10 点自动跑 17 条接口回归用例；第二，执行测试，构建步骤里写的是 python -m pytest testcase/lpATMP/ --alluredir=./report/temp，跑完把 Allure 原始数据归档；第三，结果通知，我封装了一个 Pjenkins 工具类，用 python-jenkins 库对接 Jenkins 的 REST API，执行完自动调 get_job_number 拿最新构建号，调 get_build_test_report 拿通过失败数，再调 get_console_log 拿控制台日志，用正则从日志里提取出 Allure 报告链接，最后把「用例统计 + 报告链接」拼成一条消息，通过钉钉机器人 webhook 推送到团队群，实现完整的 CI/CD 闭环。
+
+部署的话，我是用 war 包方式部署在 Windows 上：先确认 Java 11+ 环境，下载 jenkins.war，用 java -jar jenkins.war --httpPort=8088 启动，浏览器打开 8088 端口输入初始密码，选「安装推荐插件」，装完创建 admin 账号。然后装了 Allure Plugin 插件用来解析报告，在 Global Tool Configuration 里配置 allure 命令路径。接着建一个 Freestyle 风格的 Job，名字叫 lpATMP-api-test，构建触发器勾选 Build periodically 填 cron 表达式，构建步骤里写 pytest 命令，构建后操作加 Allure Report 指向 report/temp 目录。最后把 Jenkins 地址、账号、API Token 填到项目的 config.ini 里，把 enable 改成 1，整个链路就通了。"
+
+
+六、面试官追问要点（必背）
+
+1. cron 表达式：0 22 * * * = 分0 时22 每天 每月 每周，面试官可能让你解释
+2. API Token vs 密码：Token 比 password 安全，在用户配置页生成，只显示一次
+3. Pjenkins 调用链：get_job_number → get_build_test_report → get_console_log → 正则提取链接，这 4 步要能背出来
+4. Allure 报告路径：report/temp 是原始数据（json），report/html 是生成的静态报告（HTML）
+5. 容错设计：enable=0 时跳过 Jenkins 调用，不影响本地跑 pytest；Jenkins 不可达时 try/except 包住不中断主流程
+6. webhook vs 钉钉插件：项目用 webhook 直接调钉钉 API，不依赖 Jenkins 的 DingTalk 插件，解耦更彻底
+7. Freestyle vs Pipeline：本项目用 Freestyle（界面配置简单），Pipeline 用代码写流水线（Jenkinsfile），适合复杂场景
